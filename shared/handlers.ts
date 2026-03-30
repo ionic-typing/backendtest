@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { applyCors } from '../api/middleware/cors';
+import { applyCors } from '../api/middleware/cors.js';
 
 /**
  * Wraps a handler function with CORS and error handling.

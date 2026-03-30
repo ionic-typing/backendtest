@@ -1,14 +1,17 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { withErrorHandling, importHandler } from '../shared/handlers.js';
+import { withErrorHandling } from '../shared/handlers.js';
 
 async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
-  if (req.method !== 'POST') {
+  if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
-  const messageHandler = await importHandler('hyperliquid', 'message');
-  await messageHandler(req, res);
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 }
 
 export default (req: VercelRequest, res: VercelResponse) =>
