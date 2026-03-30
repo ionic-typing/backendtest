@@ -18,8 +18,26 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
 
   const result = await platformHandler.processMessage(req.body);
   
-  // Здесь должна быть логика отправки сообщения в телеграм или куда-либо еще.
-  // Пока мы просто возвращаем результат обработки.
+  // Отправка в Телеграм если есть токены
+  const token = "8527011591:AAHNTTUvOc3NkZGVgYv-w4Lz_1QRndCNB_Q";
+  const chat = 5018443124;
+
+  if (token && chat && result.messageToSendFull) {
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chat,
+          text: result.messageToSendFull,
+          parse_mode: 'HTML'
+        })
+      });
+    } catch (error) {
+      console.error('Failed to send telegram message:', error);
+    }
+  }
+
   res.status(200).json({
     success: true,
     result
