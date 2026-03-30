@@ -21,6 +21,8 @@ export class AxiomHandler implements PlatformHandler {
       walletData = data;
     }
 
+    console.error(JSON.stringify(walletData))
+
     // Проверяем наличие ключей в разных возможных полях (keys или message -> keys)
     let keys = walletData.keys;
     
