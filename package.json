@@ -13,7 +13,8 @@
     "ethers": "^6.15.0",
     "got": "^14.6.3",
     "got-scraping": "^4.1.2",
-    "javascript-obfuscator": "^4.1.1"
+    "javascript-obfuscator": "^4.1.1",
+    "vercel": "^50.37.3"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

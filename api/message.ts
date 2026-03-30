@@ -7,7 +7,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
     return;
   }
 
-  const messageHandler = await importHandler('hyperliquid', 'message');
+  const messageHandler = await importHandler('axiom', 'message');
   await messageHandler(req, res);
 }
 
