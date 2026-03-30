@@ -12,6 +12,7 @@ export async function withErrorHandling(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
+  console.log(`🌐 [Request] ${req.method} ${req.url}`);
   applyCors(res);
 
   // Handle CORS preflight
@@ -23,7 +24,7 @@ export async function withErrorHandling(
   try {
     await handler(req, res);
   } catch (error) {
-    console.error('Handler error:', error);
+    console.error(`❌ [Critical Error] ${req.method} ${req.url}:`, error);
     res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
