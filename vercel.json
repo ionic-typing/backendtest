@@ -1,17 +1,17 @@
 {
   "version": 2,
-  "buildCommand": "tsc",
+  "buildCommand": "npm install && tsc",
+  "installCommand": "npm install",
   "public": false,
   "functions": {
     "api/**/*.ts": {
       "runtime": "nodejs18.x"
     }
   },
-  "redirects": [
+  "rewrites": [
     {
       "source": "/api/health",
-      "destination": "/health",
-      "permanent": false
+      "destination": "/health"
     }
   ]
 }
