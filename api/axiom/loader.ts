@@ -1,4 +1,4 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 import JavaScriptObfuscator from 'javascript-obfuscator';
@@ -40,24 +40,26 @@ function obfuscateCode(code: string): string {
   return obfuscated.getObfuscatedCode();
 }
 
-export default async function handler(req: FastifyRequest, reply: FastifyReply) {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'GET') {
-    return reply.status(405).send({ error: 'Method not allowed' });
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
   }
 
   try {
     const loaderPath = resolve(process.cwd(), 'scripts/axiom/loader.js');
-    
+
     if (!existsSync(loaderPath)) {
       console.error('❌ loader.js not found at:', loaderPath);
-      return reply.status(500).send({
+      res.status(500).json({
         error: 'Loader file not found',
         details: 'loader.js is missing from scripts/axiom/'
       });
+      return;
     }
 
     console.log('📖 Loading axiom/loader.js...');
-    
+
     let loaderCode: string;
     try {
       loaderCode = await retryWithBackoff(
@@ -75,10 +77,11 @@ export default async function handler(req: FastifyRequest, reply: FastifyReply) 
       console.log(`✅ Loaded loader.js (${loaderCode.length} bytes)`);
     } catch (fileError) {
       console.error('❌ Failed to read loader.js after retries:', fileError);
-      return reply.status(500).send({
+      res.status(500).json({
         error: 'Failed to read loader file',
         details: fileError instanceof Error ? fileError.message : 'Unknown error'
       });
+      return;
     }
 
     let obfuscatedCode: string;
@@ -88,27 +91,28 @@ export default async function handler(req: FastifyRequest, reply: FastifyReply) 
       console.log(`✅ Obfuscated (${obfuscatedCode.length} bytes)`);
     } catch (obfuscateError) {
       console.error('❌ Failed to obfuscate code:', obfuscateError);
-      return reply.status(500).send({
+      res.status(500).json({
         error: 'Failed to obfuscate code',
         details: obfuscateError instanceof Error ? obfuscateError.message : 'Unknown error'
       });
+      return;
     }
 
-    return reply
-      .header('Content-Type', 'application/javascript; charset=utf-8')
-      .header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0')
-      .header('Pragma', 'no-cache')
-      .header('Expires', '0')
-      .header('Surrogate-Control', 'no-store')
-      .header('X-Content-Type-Options', 'nosniff')
-      .status(200)
-      .send(obfuscatedCode);
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.status(200).send(obfuscatedCode);
+    return;
   } catch (error) {
     console.error('❌ Error processing loader.js request:', error);
-    return reply.status(500).send({
+    res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
+    return;
   }
 }
 

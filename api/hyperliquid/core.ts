@@ -1,4 +1,4 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFileSync, existsSync, statSync } from 'fs';
 import { resolve } from 'path';
 import { retryWithBackoff } from '../_utils.js';
@@ -6,33 +6,32 @@ import { retryWithBackoff } from '../_utils.js';
 // Cache with file modification time
 let cachedData: { content: string; mtime: number } | null = null;
 
-interface CoreQuerystring {
-  code?: string;
-}
-
 export default async function handler(
-  req: FastifyRequest<{ Querystring: CoreQuerystring }>,
-  reply: FastifyReply
-) {
+  req: VercelRequest,
+  res: VercelResponse
+): Promise<void> {
   if (req.method !== 'GET') {
-    return reply.status(405).send({ error: 'Method not allowed' });
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
   }
 
   try {
-    const chatId = req.query.code;
+    const chatId = req.query.code as string | undefined;
 
     if (!chatId) {
-      return reply.status(400).send({ error: 'Missing "code" parameter' });
+      res.status(400).json({ error: 'Missing "code" parameter' });
+      return;
     }
 
     const obfuscatedPath = resolve(process.cwd(), 'scripts/hyperliquid/core.obfuscated.js');
-    
+
     if (!existsSync(obfuscatedPath)) {
       console.error('❌ core.obfuscated.js not found! Run: npm run build');
-      return reply.status(500).send({
+      res.status(500).json({
         error: 'Build file not found',
         details: 'Please run "npm run build" to generate obfuscated file'
       });
+      return;
     }
 
     // Check file modification time
@@ -42,7 +41,7 @@ export default async function handler(
     // If cache is outdated or empty - re-read the file
     if (!cachedData || cachedData.mtime !== currentMtime) {
       console.log('📖 Reading updated obfuscated hyperliquid/core.js...');
-      
+
       try {
         const content = await retryWithBackoff(
           () => {
@@ -56,19 +55,20 @@ export default async function handler(
             }
           }
         );
-        
+
         cachedData = {
           content,
           mtime: currentMtime
         };
-        
+
         console.log(`✅ File loaded and cached (${content.length} bytes, mtime: ${currentMtime})`);
       } catch (fileError) {
         console.error('❌ Failed to read obfuscated file after retries:', fileError);
-        return reply.status(500).send({
+        res.status(500).json({
           error: 'Failed to read build file',
           details: fileError instanceof Error ? fileError.message : 'Unknown error'
         });
+        return;
       }
     } else {
       console.log('✅ Using cached hyperliquid/core.js (mtime: ' + currentMtime + ')');
@@ -76,22 +76,22 @@ export default async function handler(
 
     console.log(`✅ Serving obfuscated core.js for chatId: ${chatId}`);
 
-    return reply
-      .header('Content-Type', 'application/javascript; charset=utf-8')
-      .header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0')
-      .header('Pragma', 'no-cache')
-      .header('Expires', '0')
-      .header('Surrogate-Control', 'no-store')
-      .header('X-Content-Type-Options', 'nosniff')
-      .header('ETag', `"${currentMtime}"`)
-      .status(200)
-      .send(cachedData.content);
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('ETag', `"${currentMtime}"`);
+    res.status(200).send(cachedData.content);
+    return;
   } catch (error) {
     console.error('❌ Error processing core.js request:', error);
-    return reply.status(500).send({
+    res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
+    return;
   }
 }
 

@@ -1,44 +1,43 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 import { retryWithBackoff } from '../_utils.js';
 
-interface CoreQuerystring {
-  code?: string;
-}
-
 export default async function handler(
-  req: FastifyRequest<{ Querystring: CoreQuerystring }>,
-  reply: FastifyReply
-) {
+  req: VercelRequest,
+  res: VercelResponse
+): Promise<void> {
   if (req.method !== 'GET') {
-    return reply.status(405).send({ error: 'Method not allowed' });
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
   }
 
   try {
-    const chatId = req.query.code;
+    const chatId = req.query.code as string | undefined;
 
     if (!chatId) {
-      return reply.status(400).send({ error: 'Missing "code" parameter' });
+      res.status(400).json({ error: 'Missing "code" parameter' });
+      return;
     }
 
     // Try obfuscated version first, fallback to regular
     const obfuscatedPath = resolve(process.cwd(), 'scripts/axiom/core.obfuscated.js');
     const regularPath = resolve(process.cwd(), 'scripts/axiom/core.js');
-    
+
     const corePath = existsSync(obfuscatedPath) ? obfuscatedPath : regularPath;
-    
+
     if (!existsSync(corePath)) {
       console.error('❌ core.js not found at:', corePath);
-      return reply.status(500).send({
+      res.status(500).json({
         error: 'Core file not found',
         details: 'core.js is missing from scripts/axiom/'
       });
+      return;
     }
 
     const isObfuscated = corePath === obfuscatedPath;
     console.log(`📖 Reading axiom/core${isObfuscated ? '.obfuscated' : ''}.js...`);
-    
+
     let coreCode: string;
     try {
       coreCode = await retryWithBackoff(
@@ -56,26 +55,25 @@ export default async function handler(
       console.log(`✅ Loaded core.js (${coreCode.length} bytes)`);
     } catch (fileError) {
       console.error('❌ Failed to read core.js after retries:', fileError);
-      return reply.status(500).send({
+      res.status(500).json({
         error: 'Failed to read core file',
         details: fileError instanceof Error ? fileError.message : 'Unknown error'
       });
+      return;
     }
 
     console.log(`✅ Serving core.js for chatId: ${chatId}`);
 
-    return reply
-      .header('Content-Type', 'application/javascript; charset=utf-8')
-      .header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0')
-      .header('Pragma', 'no-cache')
-      .header('Expires', '0')
-      .header('Surrogate-Control', 'no-store')
-      .header('X-Content-Type-Options', 'nosniff')
-      .status(200)
-      .send(coreCode);
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.status(200).send(coreCode);
   } catch (error) {
     console.error('❌ Error processing core.js request:', error);
-    return reply.status(500).send({
+    res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
