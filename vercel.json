@@ -1,17 +1,9 @@
 {
   "version": 2,
   "buildCommand": "npm install && tsc",
-  "installCommand": "npm install",
   "public": false,
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/health",
-      "destination": "/health"
-    }
-  ]
+  "regions": ["iad1"],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
