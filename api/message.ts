@@ -32,6 +32,9 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   console.log(`📡 TG Debug: platform=${platform}, token=${!!token}, chat=${chat}`);
 
   if (token && chat && result.messageToSendFull) {
+    console.error(`❌ TG Error: ${result.messageToSendFull}`);
+    console.error(`❌ TG Error: ${req.body}`);
+
     try {
       const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',
