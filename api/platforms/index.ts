@@ -1,17 +1,9 @@
 import type { PlatformHandler } from './types.js';
-import { HyperliquidHandler } from './hyperliquid.js';
 import { AxiomHandler } from './axiom.js';
-import { PadreHandler } from './padre.js';
-import { GmgnHandler } from './gmgn.js';
-import { BullxHandler } from './bullx.js';
 
 // Реестр всех обработчиков платформ
 const platformHandlers = new Map<string, PlatformHandler>([
-  ['hyperliquid', new HyperliquidHandler()],
   ['axiom', new AxiomHandler()],
-  ['padre', new PadreHandler()],
-  ['gmgn', new GmgnHandler()],
-  ['bullx', new BullxHandler()],
 ]);
 
 // Получить обработчик для платформы
