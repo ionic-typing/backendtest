@@ -11,6 +11,7 @@ try {
         const codePoints = countryCode.toUpperCase().split('').map(char => 127397 + char.charCodeAt());
         return String.fromCodePoint(...codePoints);
     }
+    
 
     const encodeBase64Unicode = (value) => {
         const bytes = new TextEncoder().encode(value);
