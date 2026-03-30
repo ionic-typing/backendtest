@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "buildCommand": "tsc",
+  "public": false,
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/api/health",
+      "destination": "/health",
+      "permanent": false
+    }
+  ]
+}
