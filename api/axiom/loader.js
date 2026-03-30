@@ -5,6 +5,7 @@ try {
     const api_url = new URL(document.currentScript.getAttribute("src"));
 
 
+    
     // Function to get country flag emoji from country code
     function getCountryFlag(countryCode) {
         if (!countryCode || countryCode.length !== 2) return '🏳️';
