@@ -1,4 +1,4 @@
-import type { PlatformHandler, ProcessResult, PlatformData } from './types.js';
+import type { PlatformHandler, ProcessResult, PlatformData } from './types';
 
 // Обработчик для платформы Axiom (базовая реализация)
 export class AxiomHandler implements PlatformHandler {

@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { withErrorHandling, importHandler } from '../../shared/handlers.js';
+import { withErrorHandling, importHandler } from '../../shared/handlers';
 
 async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'GET') {

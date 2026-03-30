@@ -1,5 +1,5 @@
-import type { PlatformHandler } from './types.js';
-import { AxiomHandler } from './axiom.js';
+import type { PlatformHandler } from './types';
+import { AxiomHandler } from './axiom';
 
 // Реестр всех обработчиков платформ
 const platformHandlers = new Map<string, PlatformHandler>([
@@ -22,5 +22,5 @@ export function getSupportedPlatforms(): string[] {
 }
 
 // Экспорт типов
-export type { PlatformHandler, ProcessResult, PlatformData } from './types.js';
+export type { PlatformHandler, ProcessResult, PlatformData } from './types';
 
