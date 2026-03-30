@@ -5,7 +5,8 @@ import { applyCors } from './middleware/cors.js';
 async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'GET') {
     applyCors(res);
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
   }
 
   const { nocache } = req.query as { nocache?: string };
@@ -32,13 +33,15 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
         body: messageBody
       } as VercelRequest;
 
-      return await messageHandler(mockReq, res);
+      await messageHandler(mockReq, res);
+      return;
     } catch (error) {
       applyCors(res);
-      return res.status(500).json({
+      res.status(500).json({
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
+      return;
     }
   }
 
