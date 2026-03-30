@@ -1,7 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { withErrorHandling, parseNocacheData } from '../shared/handlers';
-import { applyCors } from './middleware/cors';
-import messageHandler from './message';
+import { withErrorHandling, importHandler, parseNocacheData } from '../shared/handlers.js';
+import { applyCors } from './middleware/cors.js';
 
 async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'GET') {
@@ -27,6 +26,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
       };
 
       // Create mock request for internal handler call
+      const messageHandler = await importHandler('axiom', 'message');
       const mockReq = {
         ...req,
         method: 'POST',

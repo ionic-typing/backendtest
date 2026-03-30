@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { applyCors } from '../api/middleware/cors';
+import { applyCors } from '../api/middleware/cors.js';
 
 /**
  * Wraps a handler function with CORS and error handling.
@@ -23,28 +23,23 @@ export async function withErrorHandling(
 }
 
 /**
- * Imports a platform handler (loader or core) using static imports.
- * Returns the handler function.
+ * Dynamically imports a platform handler (loader, core, or message).
+ * Returns the default export function.
  */
 export async function importHandler(
   platform: string,
   handlerType: 'loader' | 'core' | 'message'
 ): Promise<(req: VercelRequest, res: VercelResponse) => Promise<void>> {
-  const platformHandlers: Record<string, Record<'loader' | 'core', (req: VercelRequest, res: VercelResponse) => Promise<void>>> = {
-    // Platform handlers are dynamically routed via [platform] directory
-  };
+  try {
+    const modulePath = handlerType === 'message'
+      ? `../api/message.js`
+      : `../api/${platform}/${handlerType}.js`;
 
-  if (handlerType === 'message') {
-    // Message handler needs special handling - import directly in caller
-    throw new Error('Use importMessageHandler() for message handler');
+    const module = await import(modulePath);
+    return module.default;
+  } catch (error) {
+    throw new Error(`Failed to import handler: ${platform}/${handlerType}`);
   }
-
-  const handler = platformHandlers[platform]?.[handlerType as 'loader' | 'core'];
-  if (!handler) {
-    throw new Error(`Handler not found: ${platform}/${handlerType}`);
-  }
-
-  return handler;
 }
 
 /**
