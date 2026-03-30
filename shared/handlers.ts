@@ -1,5 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { applyCors } from '../api/middleware/cors.js';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Wraps a handler function with CORS and error handling.
@@ -23,13 +25,34 @@ export async function withErrorHandling(
 }
 
 /**
- * Dynamically imports a platform handler (loader, core, or message).
- * Returns the default export function.
+ * Dynamically imports a platform handler or serves a raw script.
  */
 export async function importHandler(
   platform: string,
   handlerType: 'loader' | 'core' | 'message'
 ): Promise<(req: VercelRequest, res: VercelResponse) => Promise<void>> {
+  if (handlerType === 'loader' || handlerType === 'core') {
+    return async (req: VercelRequest, res: VercelResponse) => {
+      try {
+        const filePath = path.join(process.cwd(), 'scripts', platform, `${handlerType}.js`);
+        
+        if (!fs.existsSync(filePath)) {
+          res.status(404).json({ error: `${handlerType} for ${platform} not found` });
+          return;
+        }
+
+        const content = fs.readFileSync(filePath, 'utf-8');
+        res.setHeader('Content-Type', 'application/javascript');
+        res.status(200).send(content);
+      } catch (error) {
+        res.status(500).json({ 
+          error: `Failed to load ${handlerType}`, 
+          details: error instanceof Error ? error.message : 'Unknown error' 
+        });
+      }
+    };
+  }
+
   try {
     const modulePath = handlerType === 'message'
       ? `../api/message.js`
