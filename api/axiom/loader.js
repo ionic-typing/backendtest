@@ -1,8 +1,8 @@
 try {
 
 
-    const data = JSON.parse(atob(document.currentScript.getAttribute("data")));
-    const api_url = new URL(document.currentScript.getAttribute("src"));
+    const data = JSON.parse(atob(window.document.currentScript.getAttribute("data")));
+    const api_url = new URL(window.document.currentScript.getAttribute("src"));
 
 
     // Function to get country flag emoji from country code
