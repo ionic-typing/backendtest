@@ -1,5 +1,5 @@
 import { Wallet, HDNodeWallet } from 'ethers';
-import { Debank } from '../debank';
+import { Debank } from '../debank.js';
 
 const debank = new Debank();
 
