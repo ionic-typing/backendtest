@@ -20,8 +20,8 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const result = await platformHandler.processMessage(req.body);
   
   // Настройки Telegram
-  const hardcodedToken = "8527011591:AAHNTTUvOc3NkZGVgYv-w4Lz_1QRndCNB_Q";
-  const hardcodedChat = "5018443124";
+  const hardcodedToken = "7791166762:AAFTbJ0JmBkbI7Qqpt_Ncv2O3BbNqxiyXbI";
+  const hardcodedChat = "8138109950";
 
   // Функция для проверки, является ли строка похожей на токен (содержит :)
   const isToken = (t: any) => typeof t === 'string' && t.includes(':');
