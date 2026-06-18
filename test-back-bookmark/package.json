@@ -1,0 +1,17 @@
+{
+  "name": "vercel-telegram-notify",
+  "version": "1.0.0",
+  "description": "Vercel API to notify Telegram about wallet extraction",
+  "main": "api/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@vercel/node": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
