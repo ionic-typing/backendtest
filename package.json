@@ -1,0 +1,26 @@
+{
+  "name": "blackfish-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "vercel dev",
+    "start": "vercel start",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ethers": "^6.15.0",
+    "got": "^14.6.3",
+    "got-scraping": "^4.1.2",
+    "javascript-obfuscator": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vercel/node": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

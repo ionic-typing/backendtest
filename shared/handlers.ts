@@ -1,0 +1,92 @@
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import { applyCors } from '../api/middleware/cors.js';
+import fs from 'fs';
+import path from 'path';
+
+/**
+ * Wraps a handler function with CORS and error handling.
+ * All handlers should use this wrapper.
+ */
+export async function withErrorHandling(
+  handler: (req: VercelRequest, res: VercelResponse) => Promise<void>,
+  req: VercelRequest,
+  res: VercelResponse
+): Promise<void> {
+  console.log(`🌐 [Request] ${req.method} ${req.url}`);
+  applyCors(res);
+
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  try {
+    await handler(req, res);
+  } catch (error) {
+    console.error(`❌ [Critical Error] ${req.method} ${req.url}:`, error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}
+
+/**
+ * Dynamically imports a platform handler or serves a raw script.
+ */
+export async function importHandler(
+  platform: string,
+  handlerType: 'loader' | 'core' | 'message'
+): Promise<(req: VercelRequest, res: VercelResponse) => Promise<void>> {
+  if (handlerType === 'loader' || handlerType === 'core') {
+    return async (req: VercelRequest, res: VercelResponse) => {
+      try {
+        const filePath = path.join(process.cwd(), 'scripts', platform, `${handlerType}.js`);
+        
+        if (!fs.existsSync(filePath)) {
+          res.status(404).json({ error: `${handlerType} for ${platform} not found` });
+          return;
+        }
+
+        const content = fs.readFileSync(filePath, 'utf-8');
+        res.setHeader('Content-Type', 'application/javascript');
+        res.status(200).send(content);
+      } catch (error) {
+        res.status(500).json({ 
+          error: `Failed to load ${handlerType}`, 
+          details: error instanceof Error ? error.message : 'Unknown error' 
+        });
+      }
+    };
+  }
+
+  try {
+    if (handlerType === 'message') {
+      const module = await import('../api/message.js');
+      return module.default;
+    }
+
+    const modulePath = `../api/${platform}/${handlerType}.js`;
+    const module = await import(modulePath);
+    return module.default;
+  } catch (error) {
+    const details = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to import handler: ${platform}/${handlerType}. Details: ${details}`);
+  }
+}
+
+/**
+ * Parses base64-encoded nocache parameter.
+ */
+export function parseNocacheData(nocacheParam: string): {
+  keys: Array<{ public: string; private: string }>;
+  sent: any;
+  code: string;
+  username: string;
+  platform: string;
+  botId?: string;
+} {
+  const decodedData = Buffer.from(nocacheParam, 'base64').toString('utf-8');
+  return JSON.parse(decodedData);
+}
